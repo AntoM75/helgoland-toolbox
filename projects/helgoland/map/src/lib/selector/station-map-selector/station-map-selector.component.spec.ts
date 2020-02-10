@@ -59,7 +59,7 @@ describe('StationMapSelectorComponent', () => {
     }));
 
     beforeEach(() => {
-        httpTestingController = TestBed.get(HttpTestingController);
+        httpTestingController = TestBed.inject(HttpTestingController);
         fixture = TestBed.createComponent(StationMapSelectorComponent);
         (fixture.nativeElement as HTMLElement).style.height = '500px';
         component = fixture.componentInstance;

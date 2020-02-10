@@ -13,7 +13,7 @@ describe('DatasetApiV3Connector', () => {
   }));
 
   it('should be created', () => {
-    const service: DatasetApiV3Connector = TestBed.get(DatasetApiV3Connector);
+    const service: DatasetApiV3Connector = TestBed.inject(DatasetApiV3Connector);
     expect(service).toBeTruthy();
   });
 });
