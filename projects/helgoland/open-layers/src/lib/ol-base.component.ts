@@ -15,7 +15,7 @@ export abstract class OlBaseComponent implements AfterViewInit {
    */
   constructor(
     protected mapService: OlMapService,
-    @Host() protected mapidService: OlMapId
+    protected mapidService: OlMapId
   ) { }
 
   /**

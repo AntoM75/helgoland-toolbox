@@ -3,6 +3,8 @@ import { Map } from 'ol';
 import BaseLayer from 'ol/layer/Base';
 
 import { OlBaseComponent } from '../../ol-base.component';
+import { OlMapService } from '../../services/map.service';
+import { OlMapId } from '../../services/mapid.service';
 
 /**
  * Component to configure an additional layer to the map. The component must be embedded as seen in the example
@@ -22,6 +24,13 @@ export class OlLayerComponent extends OlBaseComponent implements AfterViewInit, 
    * Configured layer
    */
   @Input() layer: BaseLayer;
+
+  constructor(
+    protected mapService: OlMapService,
+    protected mapidService: OlMapId
+  ) {
+    super(mapService, mapidService);
+  }
 
   private map: Map;
 

@@ -71,7 +71,7 @@ export class OlStationSelectorLayerComponent extends OlBaseComponent {
 
   constructor(
     protected mapService: OlMapService,
-    @Host() protected mapidService: OlMapId,
+    protected mapidService: OlMapId,
     protected servicesConnector: HelgolandServicesConnector,
   ) {
     super(mapService, mapidService);

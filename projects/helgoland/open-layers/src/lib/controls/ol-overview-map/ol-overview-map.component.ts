@@ -4,6 +4,8 @@ import { OverviewMap } from 'ol/control.js';
 import { Layer } from 'ol/layer';
 
 import { OlBaseComponent } from '../../ol-base.component';
+import { OlMapService } from '../../services/map.service';
+import { OlMapId } from '../../services/mapid.service';
 
 /**
  * Control component for an overview map
@@ -35,6 +37,13 @@ export class OlOverviewMapComponent extends OlBaseComponent {
    * position of the overview map
    */
   @Input() position: 'upperleft' | 'upperright' | 'bottomleft' | 'bottomright' = 'bottomleft';
+
+  constructor(
+    protected mapService: OlMapService,
+    protected mapidService: OlMapId
+  ) {
+    super(mapService, mapidService);
+  }
 
   mapInitialized(map: Map) {
     const control = new OverviewMap({

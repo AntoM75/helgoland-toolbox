@@ -20,7 +20,7 @@ export class OlMousePositionComponent extends OlBaseComponent {
 
   constructor(
     protected mapService: OlMapService,
-    @Host() protected mapidService: OlMapId,
+    protected mapidService: OlMapId,
     private elementRef: ElementRef
   ) {
     super(mapService, mapidService);
