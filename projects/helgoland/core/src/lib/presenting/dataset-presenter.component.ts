@@ -12,13 +12,13 @@ import {
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 
+import { HelgolandServicesConnector } from '../api-communication/helgoland-services-connector';
 import { InternalIdHandler } from '../dataset-api/internal-id-handler.service';
 import { DatasetOptions } from '../model/internal/options';
 import { ResizableComponent } from '../model/internal/ResizableComponent';
 import { TimeInterval, Timespan } from '../model/internal/timeInterval';
 import { HasLoadableContent } from '../model/mixins/has-loadable-content';
 import { Time } from '../time/time.service';
-import { HelgolandServicesConnector } from '../api-communication/helgoland-services-connector';
 import { PresenterMessage } from './presenter-message';
 
 const equal = require('deep-equal');

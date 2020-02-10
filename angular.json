@@ -13,6 +13,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
+            "aot": true,
             "outputPath": "dist/helgoland-toolbox",
             "index": "src/index.html",
             "main": "src/main.ts",
@@ -29,6 +30,12 @@
           },
           "configurations": {
             "production": {
+              "budgets": [
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb"
+                }
+              ],
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
@@ -136,7 +143,8 @@
           },
           "configurations": {
             "production": {
-              "project": "projects/helgoland/core/ng-package.prod.json"
+              "project": "projects/helgoland/core/ng-package.prod.json",
+              "tsConfig": "projects/helgoland/core/tsconfig.lib.prod.json"
             }
           }
         },
@@ -176,7 +184,8 @@
           },
           "configurations": {
             "production": {
-              "project": "projects/helgoland/map/ng-package.prod.json"
+              "project": "projects/helgoland/map/ng-package.prod.json",
+              "tsConfig": "projects/helgoland/map/tsconfig.lib.prod.json"
             }
           }
         },
@@ -216,7 +225,8 @@
           },
           "configurations": {
             "production": {
-              "project": "projects/helgoland/caching/ng-package.prod.json"
+              "project": "projects/helgoland/caching/ng-package.prod.json",
+              "tsConfig": "projects/helgoland/caching/tsconfig.lib.prod.json"
             }
           }
         },
@@ -256,7 +266,8 @@
           },
           "configurations": {
             "production": {
-              "project": "projects/helgoland/control/ng-package.prod.json"
+              "project": "projects/helgoland/control/ng-package.prod.json",
+              "tsConfig": "projects/helgoland/control/tsconfig.lib.prod.json"
             }
           }
         },
@@ -296,7 +307,8 @@
           },
           "configurations": {
             "production": {
-              "project": "projects/helgoland/depiction/ng-package.prod.json"
+              "project": "projects/helgoland/depiction/ng-package.prod.json",
+              "tsConfig": "projects/helgoland/depiction/tsconfig.lib.prod.json"
             }
           }
         },
@@ -336,7 +348,8 @@
           },
           "configurations": {
             "production": {
-              "project": "projects/helgoland/favorite/ng-package.prod.json"
+              "project": "projects/helgoland/favorite/ng-package.prod.json",
+              "tsConfig": "projects/helgoland/favorite/tsconfig.lib.prod.json"
             }
           }
         },
@@ -376,7 +389,8 @@
           },
           "configurations": {
             "production": {
-              "project": "projects/helgoland/modification/ng-package.prod.json"
+              "project": "projects/helgoland/modification/ng-package.prod.json",
+              "tsConfig": "projects/helgoland/modification/tsconfig.lib.prod.json"
             }
           }
         },
@@ -416,7 +430,8 @@
           },
           "configurations": {
             "production": {
-              "project": "projects/helgoland/permalink/ng-package.prod.json"
+              "project": "projects/helgoland/permalink/ng-package.prod.json",
+              "tsConfig": "projects/helgoland/permalink/tsconfig.lib.prod.json"
             }
           }
         },
@@ -456,7 +471,8 @@
           },
           "configurations": {
             "production": {
-              "project": "projects/helgoland/selector/ng-package.prod.json"
+              "project": "projects/helgoland/selector/ng-package.prod.json",
+              "tsConfig": "projects/helgoland/selector/tsconfig.lib.prod.json"
             }
           }
         },
@@ -496,7 +512,8 @@
           },
           "configurations": {
             "production": {
-              "project": "projects/helgoland/time/ng-package.prod.json"
+              "project": "projects/helgoland/time/ng-package.prod.json",
+              "tsConfig": "projects/helgoland/time/tsconfig.lib.prod.json"
             }
           }
         },
@@ -536,7 +553,8 @@
           },
           "configurations": {
             "production": {
-              "project": "projects/helgoland/d3/ng-package.prod.json"
+              "project": "projects/helgoland/d3/ng-package.prod.json",
+              "tsConfig": "projects/helgoland/d3/tsconfig.lib.prod.json"
             }
           }
         },
@@ -576,7 +594,8 @@
           },
           "configurations": {
             "production": {
-              "project": "projects/helgoland/plotly/ng-package.prod.json"
+              "project": "projects/helgoland/plotly/ng-package.prod.json",
+              "tsConfig": "projects/helgoland/plotly/tsconfig.lib.prod.json"
             }
           }
         },
@@ -616,7 +635,8 @@
           },
           "configurations": {
             "production": {
-              "project": "projects/helgoland/time-range-slider/ng-package.prod.json"
+              "project": "projects/helgoland/time-range-slider/ng-package.prod.json",
+              "tsConfig": "projects/helgoland/time-range-slider/tsconfig.lib.prod.json"
             }
           }
         },
@@ -656,7 +676,8 @@
           },
           "configurations": {
             "production": {
-              "project": "projects/helgoland/auth/ng-package.prod.json"
+              "project": "projects/helgoland/auth/ng-package.prod.json",
+              "tsConfig": "projects/helgoland/auth/tsconfig.lib.prod.json"
             }
           }
         },
@@ -696,7 +717,8 @@
           },
           "configurations": {
             "production": {
-              "project": "projects/helgoland/eventing/ng-package.prod.json"
+              "project": "projects/helgoland/eventing/ng-package.prod.json",
+              "tsConfig": "projects/helgoland/eventing/tsconfig.lib.prod.json"
             }
           }
         },
@@ -736,7 +758,8 @@
           },
           "configurations": {
             "production": {
-              "project": "projects/helgoland/facet-search/ng-package.prod.json"
+              "project": "projects/helgoland/facet-search/ng-package.prod.json",
+              "tsConfig": "projects/helgoland/facet-search/tsconfig.lib.prod.json"
             }
           }
         },
@@ -776,7 +799,8 @@
           },
           "configurations": {
             "production": {
-              "project": "projects/helgoland/open-layers/ng-package.prod.json"
+              "project": "projects/helgoland/open-layers/ng-package.prod.json",
+              "tsConfig": "projects/helgoland/open-layers/tsconfig.lib.prod.json"
             }
           }
         },
@@ -816,7 +840,8 @@
           },
           "configurations": {
             "production": {
-              "project": "projects/helgoland/sensorml/ng-package.prod.json"
+              "project": "projects/helgoland/sensorml/ng-package.prod.json",
+              "tsConfig": "projects/helgoland/sensorml/tsconfig.lib.prod.json"
             }
           }
         },
