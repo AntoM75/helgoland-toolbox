@@ -6,16 +6,22 @@ import { catchError, map } from 'rxjs/operators';
 import { HttpService } from '../../../dataset-api/http.service';
 import { InternalDatasetId } from '../../../dataset-api/internal-id-handler.service';
 import { Category } from '../../../model/dataset-api/category';
-import { Data, TimeValueTuple } from '../../../model/dataset-api/data';
-import { FirstLastValue, ParameterConstellation } from '../../../model/dataset-api/dataset';
+import { Data, TimeValueTuple, LocatedTimeValueEntry } from '../../../model/dataset-api/data';
+import { FirstLastValue, PlatformParameter } from '../../../model/dataset-api/dataset';
 import { Feature } from '../../../model/dataset-api/feature';
 import { Offering } from '../../../model/dataset-api/offering';
+import { Parameter } from '../../../model/dataset-api/parameter';
 import { Phenomenon } from '../../../model/dataset-api/phenomenon';
 import { Procedure } from '../../../model/dataset-api/procedure';
 import { Timespan } from '../../../model/internal/timeInterval';
 import { HELGOLAND_SERVICE_CONNECTOR_HANDLER } from '../../helgoland-services-connector';
 import { HelgolandServiceConnector } from '../../interfaces/service-connector-interfaces';
-import { HelgolandData, HelgolandDataFilter, HelgolandTimeseriesData } from '../../model/internal/data';
+import {
+  HelgolandData,
+  HelgolandDataFilter,
+  HelgolandTimeseriesData,
+  HelgolandTrajectoryData,
+} from '../../model/internal/data';
 import {
   DatasetExtras,
   DatasetFilter,
@@ -26,6 +32,8 @@ import {
 import { HelgolandParameterFilter } from '../../model/internal/filter';
 import { HelgolandPlatform } from '../../model/internal/platform';
 import { HelgolandService } from '../../model/internal/service';
+import { PlatformTypes } from './../../../model/dataset-api/enums';
+import { HelgolandProfile, HelgolandTrajectory } from './../../model/internal/dataset';
 import {
   ApiV3Category,
   ApiV3Dataset,
@@ -122,37 +130,50 @@ export class DatasetApiV3Connector implements HelgolandServiceConnector {
   }
 
   getDatasets(url: string, filter: DatasetFilter): Observable<HelgolandDataset[]> {
-    return this.api.getDatasets(url, this.createFilter(filter)).pipe(map(res => res.map(ds => this.createDataset(ds, url, filter))));
+    return this.api.getDatasets(url, this.createFilter(filter)).pipe(map(res => res.map(ds => this.createDataset(ds, url))));
   }
 
-  private createDataset(ds: ApiV3Dataset, url: string, filter: DatasetFilter): HelgolandDataset {
+  private createDataset(ds: ApiV3Dataset, url: string): HelgolandDataset {
+    if (!(ds.firstValue && ds.lastValue && ds.parameters)) {
+      return new HelgolandDataset(ds.id, url, ds.label);
+    }
+    let firstValue: FirstLastValue, lastValue: FirstLastValue;
+    let category: Parameter, feature: Parameter, offering: Parameter, phenomenon: Parameter, procedure: Parameter, service: Parameter;
+    let platform: PlatformParameter;
+    if (ds.firstValue) {
+      firstValue = { timestamp: new Date(ds.firstValue.timestamp).getTime(), value: ds.firstValue.value };
+    }
+    if (ds.lastValue) {
+      lastValue = { timestamp: new Date(ds.lastValue.timestamp).getTime(), value: ds.lastValue.value };
+    }
+    if (ds.parameters) {
+      category = { id: ds.parameters.category.id, label: ds.parameters.category.label };
+      feature = { id: ds.feature.id, label: ds.feature.properties.label };
+      offering = { id: ds.parameters.offering.id, label: ds.parameters.offering.label };
+      phenomenon = { id: ds.parameters.phenomenon.id, label: ds.parameters.phenomenon.label };
+      procedure = { id: ds.parameters.procedure.id, label: ds.parameters.procedure.label };
+      service = { id: ds.parameters.service.id, label: ds.parameters.service.label };
+      platform = { id: ds.parameters.service.id, label: ds.parameters.service.label, platformType: PlatformTypes.stationary };
+    }
     switch (ds.datasetType) {
       case ApiV3DatasetTypes.Timeseries:
-        if (ds.firstValue || ds.lastValue) {
-          if (ds.datasetType === ApiV3DatasetTypes.Timeseries) {
-            const firstValue: FirstLastValue = { timestamp: new Date(ds.firstValue.timestamp).getTime(), value: ds.firstValue.value };
-            const lastValue: FirstLastValue = { timestamp: new Date(ds.lastValue.timestamp).getTime(), value: ds.lastValue.value };
-            const tsparameters: ParameterConstellation = {
-              category: { id: ds.parameters.category.id, label: ds.parameters.category.label },
-              feature: { id: ds.feature.id, label: ds.feature.properties.label },
-              offering: { id: ds.parameters.offering.id, label: ds.parameters.offering.label },
-              phenomenon: { id: ds.parameters.phenomenon.id, label: ds.parameters.phenomenon.label },
-              procedure: { id: ds.parameters.procedure.id, label: ds.parameters.procedure.label },
-              service: { id: ds.parameters.service.id, label: ds.parameters.service.label }
-            };
-            const platform = this.createHelgolandPlatform(ds.feature);
-            return new HelgolandTimeseries(ds.id, url, ds.label, ds.uom, platform, firstValue, lastValue, [], null, tsparameters);
-          }
+        if (ds.observationType === ApiV3ObservationTypes.Simple && (ds.valueType === ApiV3ValueTypes.Quantity || ds.valueType === ApiV3ValueTypes.Count)) {
+          return new HelgolandTimeseries(ds.id, url, ds.label, ds.uom, this.createHelgolandPlatform(ds.feature), firstValue, lastValue, [], null,
+            { category, feature, offering, phenomenon, procedure, service }
+          );
         } else {
           return new HelgolandDataset(ds.id, url, ds.label);
         }
-        break;
+      case ApiV3DatasetTypes.Trajectory:
+        if (ds.observationType === ApiV3ObservationTypes.Profil) {
+          return new HelgolandProfile(ds.id, url, ds.label, ds.uom, true, firstValue, lastValue, { category, feature, offering, phenomenon, procedure, service, platform });
+        } else {
+          return new HelgolandTrajectory(ds.id, url, ds.label, ds.uom, firstValue, lastValue, { category, feature, offering, phenomenon, procedure, service, platform });
+        }
       case ApiV3DatasetTypes.Profile:
-        throw new Error('not implemented');
-        break;
-      case ApiV3DatasetTypes.Timeseries:
-        throw new Error('not implemented');
-        break;
+      case ApiV3DatasetTypes.IndividualObservation:
+        console.error(`'${ds.datasetType}' not implemented`);
+        return new HelgolandDataset(ds.id, url, ds.label);
       default:
         return new HelgolandDataset(ds.id, url, ds.label);
     }
@@ -198,47 +219,55 @@ export class DatasetApiV3Connector implements HelgolandServiceConnector {
   }
 
   getDataset(internalId: InternalDatasetId, filter: DatasetFilter): Observable<HelgolandDataset> {
-    return this.api.getDataset(internalId.id, internalId.url, filter).pipe(map(res => this.createDataset(res, internalId.url, filter)));
+    return this.api.getDataset(internalId.id, internalId.url, filter).pipe(map(res => this.createDataset(res, internalId.url)));
   }
 
   getDatasetData(dataset: HelgolandDataset, timespan: Timespan, filter: HelgolandDataFilter): Observable<HelgolandData> {
-    const maxTimeExtent = moment.duration(1, 'year').asMilliseconds();
-    if ((timespan.to - timespan.from) > maxTimeExtent) {
-      const requests: Array<Observable<HelgolandTimeseriesData>> = [];
-      let start = moment(timespan.from).startOf('year');
-      let end = moment(timespan.from).endOf('year');
-      while (start.isBefore(moment(timespan.to))) {
-        const chunkSpan = new Timespan(start.unix() * 1000, end.unix() * 1000);
-        requests.push(
-          this.api.getDatasetData(dataset.id, dataset.url, { timespan: this.createRequestTimespan(chunkSpan), format: 'flot' })
-            .pipe(map(res => this.createTimeseriesData(res)))
-        );
-        start = end.add(1, 'millisecond');
-        end = moment(start).endOf('year');
-      }
-      return forkJoin(requests).pipe(map((e) => {
-        const mergedResult = e.reduce((previous, current) => {
-          const next: HelgolandTimeseriesData = new HelgolandTimeseriesData(previous.values.concat(current.values));
-          for (const key in previous.referenceValues) {
-            if (previous.referenceValues.hasOwnProperty(key)) {
-              next.referenceValues[key] = previous.referenceValues[key].concat(current.referenceValues[key]);
-            }
-          }
-          return next;
-        });
-        if (mergedResult.values && mergedResult.values.length > 0) {
-          // cut first
-          const fromIdx = mergedResult.values.findIndex(el => el[0] >= timespan.from);
-          mergedResult.values = mergedResult.values.slice(fromIdx);
-          // cut last
-          const toIdx = mergedResult.values.findIndex(el => el[0] >= timespan.to);
-          if (toIdx >= 0) { mergedResult.values = mergedResult.values.slice(0, toIdx + 1); }
+
+    if (dataset instanceof HelgolandTimeseries) {
+      const maxTimeExtent = moment.duration(1, 'year').asMilliseconds();
+      if ((timespan.to - timespan.from) > maxTimeExtent) {
+        const requests: Array<Observable<HelgolandTimeseriesData>> = [];
+        let start = moment(timespan.from).startOf('year');
+        let end = moment(timespan.from).endOf('year');
+        while (start.isBefore(moment(timespan.to))) {
+          const chunkSpan = new Timespan(start.unix() * 1000, end.unix() * 1000);
+          requests.push(
+            this.api.getDatasetData<TimeValueTuple>(dataset.id, dataset.url, { timespan: this.createRequestTimespan(chunkSpan), format: 'flot' })
+              .pipe(map(res => this.createTimeseriesData(res)))
+          );
+          start = end.add(1, 'millisecond');
+          end = moment(start).endOf('year');
         }
-        return mergedResult;
-      }));
-    } else {
-      return this.api.getDatasetData(dataset.id, dataset.url, { timespan: this.createRequestTimespan(timespan), format: 'flot' })
-        .pipe(map(res => this.createDatasetData(dataset, res)));
+        return forkJoin(requests).pipe(map((e) => {
+          const mergedResult = e.reduce((previous, current) => {
+            const next: HelgolandTimeseriesData = new HelgolandTimeseriesData(previous.values.concat(current.values));
+            for (const key in previous.referenceValues) {
+              if (previous.referenceValues.hasOwnProperty(key)) {
+                next.referenceValues[key] = previous.referenceValues[key].concat(current.referenceValues[key]);
+              }
+            }
+            return next;
+          });
+          if (mergedResult.values && mergedResult.values.length > 0) {
+            // cut first
+            const fromIdx = mergedResult.values.findIndex(el => el[0] >= timespan.from);
+            mergedResult.values = mergedResult.values.slice(fromIdx);
+            // cut last
+            const toIdx = mergedResult.values.findIndex(el => el[0] >= timespan.to);
+            if (toIdx >= 0) { mergedResult.values = mergedResult.values.slice(0, toIdx + 1); }
+          }
+          return mergedResult;
+        }));
+      } else {
+        return this.api.getDatasetData<TimeValueTuple>(dataset.id, dataset.url, { timespan: this.createRequestTimespan(timespan), format: 'flot' })
+          .pipe(map(res => this.createTimeseriesData(res)));
+      }
+    }
+
+    if (dataset instanceof HelgolandTrajectory) {
+      return this.api.getDatasetData<LocatedTimeValueEntry>(dataset.id, dataset.url, { timespan: this.createRequestTimespan(timespan), unixTime: true })
+        .pipe(map(res => this.createTrajectoryData(res)));
     }
   }
 
@@ -250,13 +279,11 @@ export class DatasetApiV3Connector implements HelgolandServiceConnector {
     return encodeURI(moment(timespan.from).format() + '/' + moment(timespan.to).format());
   }
 
-  private createDatasetData(dataset: HelgolandDataset, res: Data<TimeValueTuple>): HelgolandData {
-    if (dataset instanceof HelgolandTimeseries) {
-      return this.createTimeseriesData(res);
-    }
+  private createTrajectoryData(res: Data<LocatedTimeValueEntry>): HelgolandTrajectoryData {
+    return new HelgolandTrajectoryData(res.values);
   }
 
-  private createTimeseriesData(res: Data<TimeValueTuple>) {
+  private createTimeseriesData(res: Data<TimeValueTuple>): HelgolandTimeseriesData {
     const data = new HelgolandTimeseriesData(res.values);
     data.referenceValues = res.referenceValues ? res.referenceValues : {};
     if (res.valueBeforeTimespan) {
@@ -276,22 +303,22 @@ export class DatasetApiV3Connector implements HelgolandServiceConnector {
     if (filter.procedure) { apiFilter.procedure = filter.procedure; }
     if (filter.feature) { apiFilter.feature = filter.feature; }
     if (filter.expanded) { apiFilter.expanded = filter.expanded; }
-    if (filter.lang) { apiFilter.lang = filter.lang; }
+    if (filter.lang) { apiFilter.locale = filter.lang; }
     switch (filter.type) {
       case DatasetType.Timeseries:
-        apiFilter.datasetTypes = ApiV3DatasetTypes.Timeseries;
-        apiFilter.observationTypes = ApiV3ObservationTypes.Simple;
-        apiFilter.valuesTypes = ApiV3ValueTypes.Quantity;
+        apiFilter.datasetTypes = [ApiV3DatasetTypes.Timeseries];
+        apiFilter.observationTypes = [ApiV3ObservationTypes.Simple];
+        apiFilter.valueTypes = [ApiV3ValueTypes.Quantity, ApiV3ValueTypes.Count];
         break;
       case DatasetType.Trajectory:
-        apiFilter.datasetTypes = ApiV3DatasetTypes.Trajectory;
-        apiFilter.observationTypes = ApiV3ObservationTypes.Simple;
-        apiFilter.valuesTypes = ApiV3ValueTypes.Quantity;
+        apiFilter.datasetTypes = [ApiV3DatasetTypes.Trajectory];
+        apiFilter.observationTypes = [ApiV3ObservationTypes.Simple];
+        apiFilter.valueTypes = [ApiV3ValueTypes.Quantity];
         break;
       case DatasetType.Profile:
-        apiFilter.datasetTypes = ApiV3DatasetTypes.Profile;
-        apiFilter.observationTypes = ApiV3ObservationTypes.Simple;
-        apiFilter.valuesTypes = ApiV3ValueTypes.Quantity;
+        apiFilter.datasetTypes = [ApiV3DatasetTypes.Timeseries];
+        apiFilter.observationTypes = [ApiV3ObservationTypes.Profil];
+        apiFilter.valueTypes = [ApiV3ValueTypes.Quantity];
         break;
       default:
         break;
